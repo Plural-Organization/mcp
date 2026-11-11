@@ -37,6 +37,10 @@ class Link:
     open: dict[str, asyncio.Future[bool]] = field(default_factory=dict[str, asyncio.Future[bool]])
 
 
+class HostGoneError(Exception):
+    """The host disconnected while an offer was waiting for its answer."""
+
+
 class Hosts:
     def __init__(self, *, answer_timeout_s: float = ANSWER_TIMEOUT_S) -> None:
         self._links: dict[str, Link] = {}
@@ -68,7 +72,7 @@ class Hosts:
             accepted = await asyncio.wait_for(future, self._timeout)
         except TimeoutError:
             return False, SLOW
-        except (WebSocketDisconnect, RuntimeError, ConnectionError):
+        except (HostGoneError, WebSocketDisconnect, RuntimeError, ConnectionError):
             return False, OFFLINE
         finally:
             link.open.pop(offer_id, None)
@@ -109,4 +113,4 @@ class Hosts:
                 del self._links[key]
             for waiting in link.open.values():
                 if not waiting.done():
-                    waiting.cancel()
+                    waiting.set_exception(HostGoneError())
