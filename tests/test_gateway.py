@@ -132,6 +132,17 @@ async def test_a_host_that_goes_away_leaves_the_chat_with_an_error(live: str) ->
     assert result["content"][0]["text"] == OFFLINE
 
 
+async def test_a_host_that_goes_away_while_an_offer_is_open_answers_cleanly(live: str) -> None:
+    async with websockets.connect(f"ws://{live}/host") as host:
+        await host.send(json.dumps({"type": "hello", "secret": SECRET}))
+        await host.recv()
+        chat = asyncio.create_task(chat_calls(live))
+        assert json.loads(await host.recv())["type"] == "offer"
+    result = (await chat)["result"]
+    assert result["isError"] is True
+    assert result["content"][0]["text"] == OFFLINE
+
+
 async def test_a_host_with_a_short_secret_is_turned_away(live: str) -> None:
     async with websockets.connect(f"ws://{live}/host") as host:
         await host.send(json.dumps({"type": "hello", "secret": "short"}))

@@ -27,3 +27,5 @@ uv run pytest && uv run ruff check . && uv run pyright
 `GET /healthz` for a health check. The wire protocol with the host is three JSON messages:
 `{"type":"hello","secret"}` from the host, then `{"type":"offer","id","source","title","context"}`
 from the gateway and `{"type":"answer","id","accepted"}` back.
+
+Production container and server instructions live in [`deploy/README.md`](deploy/README.md).
